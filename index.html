@@ -1197,6 +1197,10 @@
         .detail-action-row { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:25px; }
         .service-detail-section { scroll-margin-top:90px; }
 
+
+        /* Service details stay hidden until a visitor selects a service */
+        .service-detail-section { display: none; }
+        .service-detail-section.service-detail-active { display: block; }
     </style>
 </head>
 <body>
@@ -2161,6 +2165,43 @@
             el.style.transition = 'all 0.6s ease';
             observer.observe(el);
         });
+    </script>
+
+
+    <script>
+    // Show only the service detail the visitor selects; keep all WhatsApp links/numbers unchanged.
+    document.addEventListener('DOMContentLoaded', function () {
+        const detailSections = Array.from(document.querySelectorAll('.service-detail-section'));
+        function showServiceDetail(id, updateHash) {
+            const target = document.getElementById(id);
+            if (!target || !target.classList.contains('service-detail-section')) return false;
+            detailSections.forEach(section => {
+                section.classList.toggle('service-detail-active', section === target);
+            });
+            if (updateHash) history.replaceState(null, '', '#' + id);
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return true;
+        }
+        document.querySelectorAll('a.service-detail-link[href^="#detail-"]').forEach(link => {
+            link.addEventListener('click', function (event) {
+                const id = this.getAttribute('href').slice(1);
+                if (showServiceDetail(id, true)) event.preventDefault();
+            });
+        });
+        document.querySelectorAll('.detail-back, a[href="#services"]').forEach(link => {
+            link.addEventListener('click', function (event) {
+                const inDetail = this.closest('.service-detail-section');
+                if (!inDetail) return;
+                event.preventDefault();
+                detailSections.forEach(section => section.classList.remove('service-detail-active'));
+                history.replaceState(null, '', '#services');
+                document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+        if (location.hash.startsWith('#detail-')) {
+            showServiceDetail(location.hash.slice(1), false);
+        }
+    });
     </script>
 
 </body>
